@@ -34,3 +34,17 @@ Icon
 # Files that might appear on external disk
 .Spotlight-V100
 .Trashes
+
+.gitignore
+
+*.pyc
+*.lnk
+
+activate.bat
+start_mongo
+
+db/*
+env/*
+schemongo/*
+test/coverage/*
+
