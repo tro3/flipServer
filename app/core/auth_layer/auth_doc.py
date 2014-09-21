@@ -42,7 +42,7 @@ def add_authstates(endpoint, doc, auth_state=None, subdoc=False):
                 del doc[key]
             
         if is_list_of_objects(val):
-            lists[key] = resolve_state('_create', val.get('auth', {}), auth_state, doc)
+            lists[key] = resolve_state('_create', val['schema'].get('auth', {}), auth_state, doc)
             
             new_auth_state = dict(auth_state)
             new_auth_state['_create'] = lists[key]

@@ -136,7 +136,6 @@ class AuthLayerTests(TestCase):
         self.assertIsNone(errs)
 
         data = json.loads(self.db.test.find_one_and_serialize({"_id":1}))
-        p(data)
         self.assertEqual(data, {
             "_id": 1,
             "_auth": {
@@ -153,6 +152,222 @@ class AuthLayerTests(TestCase):
                         "_delete": True
                     },
                     "name": "Fred"
+                }
+            ]
+        })
+
+
+    def test_find(self):
+        self.db.register_endpoint('test', {
+            'schema': {
+                "name": {"type": "string"},
+                "user": {
+                    "type": "reference",
+                    "collection": "users",
+                    "fields": ['username']
+                },
+                "subdoc": {"type": "dict", "schema": {
+                    "data": {"type":"integer"}
+                }},
+                "doclist": {"type": "list", "schema": {"type": "dict", "schema": {
+                    "name": {"type":"string"}
+                }}},
+            }
+        })
+
+
+        data = {
+            "name": "Bob",
+            "user": {"_id": 1},
+            "subdoc": {
+                "data": 4
+            },
+            "doclist": [{"name": "Fred"}]
+        }
+        errs = self.db.test.insert(data, self.user)
+        self.assertIsNone(errs)
+
+        data = {
+            "name": "George",
+            "user": {"_id": 1},
+            "subdoc": {
+                "data": 4
+            },
+            "doclist": [{"name": "Fred"}]
+        }
+        errs = self.db.test.insert(data, self.user)
+        self.assertIsNone(errs)
+
+        data = json.loads(self.db.test.find_and_serialize({"name":"George"}))
+        self.assertEqual(data, [{
+            "_id": 2,
+            "_auth": {
+                "_edit": True,
+                "_delete": True,
+                "doclist": True
+            },
+            "name": "George",
+            "user": {
+                '_id':1,
+                "_auth": {
+                    "_edit": True,
+                    "_delete": True
+                },
+                'username': 'bob'
+            },
+            "subdoc": {
+                "_id": 1,
+                "_auth": {
+                    "_edit": True,
+                },
+                "data": 4
+            },
+            "doclist": [
+                {
+                    "_id": 1,
+                    "_auth": {
+                        "_edit": True,
+                        "_delete": True
+                    },
+                    "name": "Fred"
+                }
+            ]
+        }])
+
+
+    def test_auth_propagation(self):
+        self.db.register_endpoint('test', {
+            'schema': {
+                "name": {"type": "string"},
+                "subdoc": {"type": "dict", "schema": {
+                    "data": {"type":"integer"},
+                    "ssubdoc": {"type": "dict",
+                        "auth": {
+                            "edit": False,
+                        },
+                        "schema": {
+                            "data": {"type":"integer"},
+                        }
+                    },
+                }},
+                "doclist": {"type": "list", "schema": {"type": "dict",
+                    "auth": {
+                        "create": False,
+                        "edit": lambda e: e._id == 2,
+                    },
+                    "schema": {
+                        "name": {"type":"string"},
+                        "subdoc": {"type": "dict", "schema": {
+                            "data": {"type":"integer"},
+                            "ssubdoc": {"type": "dict", "schema": {
+                                "data": {"type":"integer"},
+                            }},
+                        }},
+                    }
+                }},
+            }
+        })
+
+
+        data = {
+            "name": "Bob",
+            "subdoc": {
+                "data": 4,
+                "ssubdoc": {
+                    "data": 4
+                },
+            },
+            "doclist": [
+                {
+                    "name": "Fred",
+                    "subdoc": {
+                        "data": 4,
+                        "ssubdoc": {
+                            "data": 4
+                        },
+                    },
+                },
+                {
+                    "name": "Fred",
+                    "subdoc": {
+                        "data": 4,
+                        "ssubdoc": {
+                            "data": 4
+                        },
+                    },
+                }
+            ]
+        }
+        errs = self.db.test.insert(data, self.user, direct=True)
+        self.assertIsNone(errs)
+
+        data = json.loads(self.db.test.find_one_and_serialize(1))
+        self.assertEqual(data, {
+            "_id": 1,
+            "_auth": {
+                "_edit": True,
+                "_delete": True,
+                "doclist": False
+            },
+            "name": "Bob",
+            "subdoc": {
+                "_id": 1,
+                "_auth": {
+                    "_edit": True
+                },
+                "data": 4,
+                "ssubdoc": {
+                    "_id": 1,
+                    "_auth": {
+                        "_edit": False
+                    },
+                    "data": 4
+                },
+            },
+            "doclist": [
+                {
+                    "_id": 1,
+                    "_auth": {
+                        "_edit": False,
+                        "_delete": True,
+                    },
+                    "name": "Fred",
+                    "subdoc": {
+                        "_id": 1,
+                        "_auth": {
+                            "_edit": False
+                        },
+                        "data": 4,
+                        "ssubdoc": {
+                            "_id": 1,
+                            "_auth": {
+                                "_edit": False
+                            },
+                            "data": 4
+                        },
+                    },
+                },
+                {
+                    "_id": 2,
+                    "_auth": {
+                        "_edit": True,
+                        "_delete": True,
+                    },
+                    "name": "Fred",
+                    "subdoc": {
+                        "_id": 1,
+                        "_auth": {
+                            "_edit": True
+                        },
+                        "data": 4,
+                        "ssubdoc": {
+                            "_id": 1,
+                            "_auth": {
+                                "_edit": True
+                            },
+                            "data": 4
+                        },
+                    },
                 }
             ]
         })
