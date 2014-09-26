@@ -371,3 +371,147 @@ class AuthLayerTests(TestCase):
                 }
             ]
         })
+
+
+
+    def test_auth_incoming_edit(self):
+        self.db.register_endpoint('test', {
+            'schema': {
+                "name": {"type": "string"},
+                "subdoc": {"type": "dict", "schema": {
+                    "data": {"type":"integer"},
+                    "ssubdoc": {"type": "dict",
+                        "auth": {
+                            "edit": False,
+                        },
+                        "schema": {
+                            "data": {"type":"integer"},
+                        }
+                    },
+                }},
+                "doclist": {"type": "list", "schema": {"type": "dict",
+                    "auth": {
+                        "create": False,
+                        "delete": lambda e: e._id == 2,
+                    },
+                    "schema": {
+                        "name": {"type":"string"},
+                        "subdoc": {"type": "dict", "schema": {
+                            "data": {"type":"integer"},
+                            "ssubdoc": {"type": "dict", "schema": {
+                                "data": {"type":"integer"},
+                            }},
+                        }},
+                    }
+                }},
+            }
+        })
+
+
+        data = {
+            "name": "Bob",
+            "subdoc": {
+                "data": 4,
+                "ssubdoc": {
+                    "data": 4
+                },
+            },
+            "doclist": [
+                {
+                    "name": "Fred",
+                    "subdoc": {
+                        "data": 4,
+                        "ssubdoc": {
+                            "data": 4
+                        },
+                    },
+                },
+                {
+                    "name": "Fred",
+                    "subdoc": {
+                        "data": 4,
+                        "ssubdoc": {
+                            "data": 4
+                        },
+                    },
+                }
+            ]
+        }
+        errs = self.db.test.insert(data, self.user, direct=True)
+        self.assertIsNone(errs)
+        
+        incoming = {
+            "_id": 1,
+            "_auth": {
+                "_edit": True,
+                "_delete": True,
+                "doclist": False
+            },
+            "name": "Bob",
+            "subdoc": {
+                "_id": 1,
+                "_auth": {
+                    "_edit": True
+                },
+                "data": 5,
+                "ssubdoc": {
+                    "_id": 1,
+                    "_auth": {
+                        "_edit": False
+                    },
+                    "data": 5
+                },
+            },
+            "doclist": [{"name":"Shouldn't be entered"}]
+        }
+        errs = self.db.test.update(incoming, self.user)
+        self.assertIsNone(errs)
+
+        data = json.loads(self.db.test.find_one_and_serialize(1))
+        self.assertEqual(data, {
+            "_id": 1,
+            "_auth": {
+                "_edit": True,
+                "_delete": True,
+                "doclist": False
+            },
+            "name": "Bob",
+            "subdoc": {
+                "_id": 1,
+                "_auth": {
+                    "_edit": True
+                },
+                "data": 5,
+                "ssubdoc": {
+                    "_id": 1,
+                    "_auth": {
+                        "_edit": False
+                    },
+                    "data": 4
+                },
+            },
+            "doclist": [
+                {
+                    "_id": 1,
+                    "_auth": {
+                        "_edit": True,
+                        "_delete": False,
+                    },
+                    "name": "Fred",
+                    "subdoc": {
+                        "_id": 1,
+                        "_auth": {
+                            "_edit": True
+                        },
+                        "data": 4,
+                        "ssubdoc": {
+                            "_id": 1,
+                            "_auth": {
+                                "_edit": True
+                            },
+                            "data": 4
+                        },
+                    },
+                }
+            ]
+        })
