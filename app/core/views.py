@@ -66,12 +66,12 @@ def api_list_view_factory(db, collection_name):
                 return UNAUTHORIZED
 
             try:
-                filt = json.loads(request.args.get('q', "{}"))
-                projection = json.loads(request.args.get('fields', 'null'))
+                spec = json.loads(request.args.get('q', "{}"))
+                fields = json.loads(request.args.get('fields', 'null'))
             except:
                 return MALFORMED
             
-            data = db[collection_name].find(filt)
+            data = db[collection_name].find(spec, fields)
 
             resp = {'_status':'OK', '_items':[get_serial_dict(schema, x) for x in data], '_auth': resolve_auth('create', endpoint)}
             return Response(json.dumps(resp), content_type='application/json')

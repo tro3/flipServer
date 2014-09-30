@@ -16,7 +16,10 @@ class APIBasicListTests(TestCase):
             'DEBUG': True,
             'CLIENT': mongomock.MongoClient(),
             'ENDPOINTS': {
-                'users': {'schema': {'username': {"type": "string", 'required': True}}}
+                'users': {'schema': {
+                    'username': {"type": "string", 'required': True},
+                    'active': {"type": "boolean", 'required': True, 'default': True},
+                }}
             }
         }
         self.app = create_app(**cfg)
@@ -41,7 +44,7 @@ class APIBasicListTests(TestCase):
         self.db.users.insert([
             {'username': 'fflint'},    
             {'username': 'brubble'},    
-        ], direct=True)
+        ])
 
         resp = self.client.get('/api/users')
         self.assertEqual(resp.status_code, 200)
@@ -51,8 +54,8 @@ class APIBasicListTests(TestCase):
             '_status': 'OK',
             '_auth': True,
             '_items': [
-                {'_id':1, '_auth':{'_edit':True, '_delete':True}, 'username': 'fflint'},
-                {'_id':2, '_auth':{'_edit':True, '_delete':True}, 'username': 'brubble'},
+                {'_id':1, '_auth':{'_edit':True, '_delete':True}, 'username': 'fflint', 'active': True},
+                {'_id':2, '_auth':{'_edit':True, '_delete':True}, 'username': 'brubble', 'active': True},
             ],
         })
         
@@ -61,7 +64,7 @@ class APIBasicListTests(TestCase):
         self.db.users.insert([
             {'username': 'fflint'},    
             {'username': 'brubble'},    
-        ], direct=True)
+        ])
 
         resp = self.client.get('/api/users?q={"username":{"$lt":"c"}}')
         self.assertEqual(resp.status_code, 200)
@@ -71,12 +74,31 @@ class APIBasicListTests(TestCase):
             '_status': 'OK',
             '_auth': True,
             '_items': [
+                {'_id':2, '_auth':{'_edit':True, '_delete':True}, 'username': 'brubble', 'active': True},
+            ],
+        })
+
+
+    def test_get_projected_list(self, ):
+        self.db.users.insert([
+            {'username': 'fflint'},    
+            {'username': 'brubble'},    
+        ])
+
+        resp = self.client.get('/api/users?fields=["username"]')
+        self.assertEqual(resp.status_code, 200)
+        data = json.loads(resp.data)
+        p(data)
+        self.assertEqual(data, {
+            '_status': 'OK',
+            '_auth': True,
+            '_items': [
+                {'_id':1, '_auth':{'_edit':True, '_delete':True}, 'username': 'fflint'},
                 {'_id':2, '_auth':{'_edit':True, '_delete':True}, 'username': 'brubble'},
             ],
         })
         
         
-    
     def test_post_list(self, ):
         data = {'username': 'fflint'}
         
@@ -89,11 +111,11 @@ class APIBasicListTests(TestCase):
         
         self.assertEqual(data, {
             '_status': 'OK',
-            '_item': {'_id':1, '_auth':{'_edit':True, '_delete':True}, 'username': 'fflint'},
+            '_item': {'_id':1, '_auth':{'_edit':True, '_delete':True}, 'username': 'fflint', 'active': True},
         })
         
         data = self.db.users.find_one(1)
-        self.assertEqual(data, {'_id':1, 'username': 'fflint'})        
+        self.assertEqual(data, {'_id':1, 'username': 'fflint', 'active': True})        
 
 
     def test_post_multi_list(self, ):
@@ -112,14 +134,14 @@ class APIBasicListTests(TestCase):
         self.assertEqual(data, {
             '_status': 'OK',
             '_items': [
-                {'_id':1, '_auth':{'_edit':True, '_delete':True}, 'username': 'fflint'},
-                {'_id':2, '_auth':{'_edit':True, '_delete':True}, 'username': 'brubble'},
+                {'_id':1, '_auth':{'_edit':True, '_delete':True}, 'username': 'fflint', 'active': True},
+                {'_id':2, '_auth':{'_edit':True, '_delete':True}, 'username': 'brubble', 'active': True},
             ]
                 
         })
         
         data = self.db.users.find_one(2)
-        self.assertEqual(data, {'_id':2, 'username': 'brubble'})        
+        self.assertEqual(data, {'_id':2, 'username': 'brubble', 'active': True})        
         
 
     def test_post_error(self, ):
