@@ -94,8 +94,33 @@ class APIBasicListTests(TestCase):
         
         data = self.db.users.find_one(1)
         self.assertEqual(data, {'_id':1, 'username': 'fflint'})        
-        
 
+
+    def test_post_multi_list(self, ):
+        data = [
+            {'username': 'fflint'},
+            {'username': 'brubble'},
+        ]
+        
+        resp = self.client.post('/api/users',
+                                data=json.dumps(data),
+                                content_type = 'application/json'
+                                )
+        self.assertEqual(resp.status_code, 201)
+        data = json.loads(resp.data)
+        
+        self.assertEqual(data, {
+            '_status': 'OK',
+            '_items': [
+                {'_id':1, '_auth':{'_edit':True, '_delete':True}, 'username': 'fflint'},
+                {'_id':2, '_auth':{'_edit':True, '_delete':True}, 'username': 'brubble'},
+            ]
+                
+        })
+        
+        data = self.db.users.find_one(2)
+        self.assertEqual(data, {'_id':2, 'username': 'brubble'})        
+        
 
     def test_post_error(self, ):
         data = {}
@@ -111,6 +136,29 @@ class APIBasicListTests(TestCase):
             '_status': 'ERR',
             'message': 'Field errors',
             'field_errors': ['username: value is required'],
+        })
+        
+        self.assertEqual(self.db.users.find().count(), 0)        
+        
+
+    def test_post_multi_error(self, ):
+        data = [
+            {'username': 'fflint'},
+            {},
+            {'username': 'brubble'},
+        ]
+        
+        resp = self.client.post('/api/users',
+                                data=json.dumps(data),
+                                content_type = 'application/json'
+                                )
+        self.assertEqual(resp.status_code, 200)
+        data = json.loads(resp.data)
+        
+        self.assertEqual(data, {
+            '_status': 'ERR',
+            'message': 'Field errors',
+            'field_errors': [[],['username: value is required'], []],
         })
         
         self.assertEqual(self.db.users.find().count(), 0)        
