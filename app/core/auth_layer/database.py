@@ -99,53 +99,42 @@ class AuthCollectionWrapper(SchemaCollectionWrapper):
         enforce_auth_read(self.endpoint, tmp)
         return tmp
     
-    def process_insert(self, incoming, direct=False):
-        if not direct:
-            errs = enforce_datatypes(self.schema, incoming)
-            if errs:
-                return (None, errs)
+    def process_insert(self, incoming):
+        errs = enforce_datatypes(self.schema, incoming)
+        if errs:
+            return (None, errs)
 
         data = generate_prototype(self.schema)
         add_authstates(self.endpoint, data)
-        if not direct:
-            enforce_auth(self.endpoint, data, incoming)
-            
+        enforce_auth(self.endpoint, data, incoming)            
         merge(data, incoming)
         fill_in_prototypes(self.schema, data)
         run_auto_funcs(self.schema, data)
         
-        if not direct:
-            errs = enforce_schema_behaviors(self.schema, data, self)
-            if errs:
-                return (None, errs)
+        errs = enforce_schema_behaviors(self.schema, data, self)
+        if errs:
+            return (None, errs)
             
         return (data, [])
 
 
-    def process_update(self, incoming, direct=False):
+    def process_update(self, incoming):
         assert '_id' in incoming, "Cannot update document without _id attribute"
 
-        if not direct:
-            errs = enforce_datatypes(self.schema, incoming)
-            if errs:
-                return (None, errs)
+        errs = enforce_datatypes(self.schema, incoming)
+        if errs:
+            return (None, errs)
 
-        if not direct:
-            data = self.find_one({"_id":incoming["_id"]})
-            add_authstates(self.endpoint, data)
-            enforce_auth(self.endpoint, data, incoming)
-        else:
-            data = DBDoc(incoming)
-
-        if not direct:
-            merge(data, incoming)
-            fill_in_prototypes(self.schema, data)
-
+        data = self.find_one({"_id":incoming["_id"]})
+        add_authstates(self.endpoint, data)
+        enforce_auth(self.endpoint, data, incoming)
+        merge(data, incoming)
+        fill_in_prototypes(self.schema, data)
         run_auto_funcs(self.schema, data)
-        if not direct:
-            errs = enforce_schema_behaviors(self.schema, data, self)
-            if errs:
-                return (None, errs)
+
+        errs = enforce_schema_behaviors(self.schema, data, self)
+        if errs:
+            return (None, errs)
             
         return (data, [])
     
