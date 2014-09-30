@@ -88,7 +88,6 @@ class APIBasicListTests(TestCase):
         resp = self.client.get('/api/users?fields=["username"]')
         self.assertEqual(resp.status_code, 200)
         data = json.loads(resp.data)
-        p(data)
         self.assertEqual(data, {
             '_status': 'OK',
             '_auth': True,
@@ -185,3 +184,20 @@ class APIBasicListTests(TestCase):
         
         self.assertEqual(self.db.users.find().count(), 0)        
         
+
+    #def test_get_single(self, ):
+    #    self.db.users.insert([
+    #        {'username': 'fflint'},    
+    #        {'username': 'brubble'},    
+    #    ])
+    #
+    #    resp = self.client.get('/api/users/2')
+    #    self.assertEqual(resp.status_code, 200)
+    #    data = json.loads(resp.data)
+    #    
+    #    self.assertEqual(data, {
+    #        '_status': 'OK',
+    #        '_item': [
+    #            {'_id':1, '_auth':{'_edit':True, '_delete':True}, 'username': 'fflint', 'active': True},
+    #        ],
+    #    })

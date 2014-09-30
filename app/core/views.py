@@ -49,11 +49,6 @@ def resolve_auth(key, endpoint):
     return auth
 
 
-# Move to schemongo
-from schemongo.schema_layer.serialization import get_serial_dict
-
-
-
 
 def api_list_view_factory(db, collection_name):
     
@@ -71,9 +66,9 @@ def api_list_view_factory(db, collection_name):
             except:
                 return MALFORMED
             
-            data = db[collection_name].find(spec, fields)
+            data = db[collection_name].find_and_serial_dict(spec, fields)
 
-            resp = {'_status':'OK', '_items':[get_serial_dict(schema, x) for x in data], '_auth': resolve_auth('create', endpoint)}
+            resp = {'_status':'OK', '_items':data, '_auth': resolve_auth('create', endpoint)}
             return Response(json.dumps(resp), content_type='application/json')
 
 
@@ -98,7 +93,7 @@ def api_list_view_factory(db, collection_name):
             else:
 
                 resp = {'_status':'OK'}
-                items = [get_serial_dict(schema, db[collection_name].find_one(x)) for x in ids]
+                items = [db[collection_name].find_one_and_serial_dict(x) for x in ids]
                 if len(items) == 1:
                     resp['_item'] = items[0]
                 else:
