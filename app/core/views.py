@@ -78,9 +78,6 @@ def api_list_view_factory(db, collection_name):
 
 
         elif request.method == 'POST':
-            
-            print "hello:", request.data
-            
             try:
                 incoming = json.loads(request.data)
             except:
@@ -92,18 +89,20 @@ def api_list_view_factory(db, collection_name):
             if not resolve_auth('create', endpoint):
                 return UNAUTHORIZED
 
-            errs = db[collection_name].insert(incoming)
+            ids, errs = db[collection_name].insert(incoming)
             
             if errs:
                 resp = {'_status':'ERR', 'message': 'Field errors'}
                 resp['field_errors'] = errs
                 return Response(json.dumps(resp), content_type='application/json')
             else:
-                #newid = backend.insert(collection_name, request.user, data.dump_to_db())
+
                 resp = {'_status':'OK'}
-                #data = backend.find_one(collection_name, {"_id": newid})
-                #data = DBDocument(data, endpoint)
-                #resp.update(data)
+                items = [get_serial_dict(schema, db[collection_name].find_one(x)) for x in ids]
+                if len(items) == 1:
+                    resp['_item'] = items[0]
+                else:
+                    resp['_items'] = items
                 return Response(json.dumps(resp), 
                                 status = 201,
                                 content_type='application/json')

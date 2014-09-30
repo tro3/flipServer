@@ -21,7 +21,7 @@ class AuthLayerTests(TestCase):
         data = [
             {'_id':1, 'username': 'bob'}
         ]
-        errs = self.db.users.insert(data)
+        ids, errs = self.db.users.insert(data)
         self.assertIsNone(errs)
         
         self.user = data[0]
@@ -52,7 +52,7 @@ class AuthLayerTests(TestCase):
             "num_list": [4,5],
             "doclist": [{"name": "Fred"}]
         }
-        errs = self.db.test.insert(data, self.user)
+        ids, errs = self.db.test.insert(data, self.user)
         self.assertIsNone(errs)
         
         data = self.db.test.find_one({"name":"Bob"})
@@ -132,7 +132,7 @@ class AuthLayerTests(TestCase):
             },
             "doclist": [{"name": "Fred"}, {"name": "George"}]
         }
-        errs = self.db.test.insert(data, self.user)
+        ids, errs = self.db.test.insert(data, self.user)
         self.assertIsNone(errs)
 
         data = json.loads(self.db.test.find_one_and_serialize({"_id":1}))
@@ -184,7 +184,7 @@ class AuthLayerTests(TestCase):
             },
             "doclist": [{"name": "Fred"}]
         }
-        errs = self.db.test.insert(data, self.user)
+        ids, errs = self.db.test.insert(data, self.user)
         self.assertIsNone(errs)
 
         data = {
@@ -195,7 +195,7 @@ class AuthLayerTests(TestCase):
             },
             "doclist": [{"name": "Fred"}]
         }
-        errs = self.db.test.insert(data, self.user)
+        ids, errs = self.db.test.insert(data, self.user)
         self.assertIsNone(errs)
 
         data = json.loads(self.db.test.find_and_serialize({"name":"George"}))
@@ -298,7 +298,7 @@ class AuthLayerTests(TestCase):
                 }
             ]
         }
-        errs = self.db.test.insert(data, self.user, direct=True)
+        ids, errs = self.db.test.insert(data, self.user, direct=True)
         self.assertIsNone(errs)
 
         data = json.loads(self.db.test.find_one_and_serialize(1))
@@ -437,7 +437,7 @@ class AuthLayerTests(TestCase):
                 }
             ]
         }
-        errs = self.db.test.insert(data, self.user, direct=True)
+        ids, errs = self.db.test.insert(data, self.user, direct=True)
         self.assertIsNone(errs)
         
         incoming = {
