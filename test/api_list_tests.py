@@ -198,3 +198,37 @@ class APIBasicListTests(TestCase):
             '_status': 'OK',
             '_item': {'_id':2, '_auth':{'_edit':True, '_delete':True}, 'username': 'brubble', 'active': True},
         })
+        
+        
+    def test_edit_single(self, ):
+        self.db.users.insert([
+            {'username': 'fflint'},    
+            {'username': 'brubble'},    
+        ])
+        
+        data = {'_id':2, '_auth':{'_edit':True, '_delete':True}, 'username': 'brubble', 'active': False}
+    
+        resp = self.client.put('/api/users/2',
+                               data=json.dumps(data),
+                               content_type = 'application/json'
+                               )
+        self.assertEqual(resp.status_code, 200)
+        data = json.loads(resp.data)
+        self.assertEqual(data, {
+            '_status': 'OK',
+            '_item': {'_id':2, '_auth':{'_edit':True, '_delete':True}, 'username': 'brubble', 'active': False},
+        })
+        
+        data = self.db.users.find_one(2)
+        self.assertEqual(data, {'_id':2, 'username': 'brubble', 'active': False})        
+
+    def test_delete_single(self, ):
+        self.db.users.insert([
+            {'username': 'fflint'},    
+            {'username': 'brubble'},    
+        ])
+        
+        resp = self.client.delete('/api/users/2')
+        self.assertEqual(resp.status_code, 204)
+        
+        self.assertEqual(self.db.users.find().count(), 1)

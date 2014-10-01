@@ -108,9 +108,6 @@ def api_list_view_factory(db, collection_name):
 
 
 
-
-
-
 def api_item_view_factory(db, collection_name):
     
     def view_fcn(id):
@@ -119,13 +116,7 @@ def api_item_view_factory(db, collection_name):
         if not db[collection_name].find({"_id": id}).count():
             return NOT_FOUND
 
-#        data = app.mongo.db[collection_name].find_one({"_id": id})
-#        data = DBDocument(data, endpoint)
-
-
-
-        if request.method == 'GET':
-            
+        if request.method == 'GET':            
             try:
                 fields = json.loads(request.args.get('fields', 'null'))
             except:
@@ -139,7 +130,6 @@ def api_item_view_factory(db, collection_name):
             resp = {'_status':'OK', '_item':db[collection_name].get_serial_dict(data)}
             return Response(json.dumps(resp), content_type='application/json')
 
-        
 
         elif request.method == 'PUT':
             try:
@@ -151,27 +141,26 @@ def api_item_view_factory(db, collection_name):
                 return WRONG_ID
             incoming.update({'_id':id})
             
-            data.update(incoming)
-            data.pre_save()
+            errs = db[collection_name].update(incoming)
 
-            if data.errors:
+            if errs:
                 resp = {'_status':'ERR', 'message': 'Field errors'}
-                resp['field_errors'] = data.errors
+                resp['field_errors'] = errs
                 return Response(json.dumps(resp), content_type='application/json')
             else:
-                backend.update(collection_name, request.user, data.dump_to_db())
-                resp = {'_status':'OK'}
-                data = backend.find_one(collection_name, {"_id": id})
-                data = DBDocument(data, endpoint)
-                resp.update(data)
-                return Response(dumps(resp, app), 
+                resp = {'_status':'OK',
+                        '_item': db[collection_name].find_one_and_serial_dict(id)
+                       }
+                return Response(json.dumps(resp), 
                                 status = 200,
                                 content_type='application/json')
 
         elif request.method == 'DELETE':
-            if not data._auth_state.delete:
+            data = db[collection_name].find_one({'_id':id})
+            if not data._authstate['_delete']:
                 return UNAUTHORIZED
-            backend.remove(collection_name, request.user, {"_id": id})
+            
+            db[collection_name].remove({"_id": id})
             return Response(status=204)
         
         else:
