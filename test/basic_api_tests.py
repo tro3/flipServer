@@ -9,7 +9,7 @@ import json
 from pprint import pprint as p
 
 
-class APIBasicListTests(TestCase):
+class BasicAPITests(TestCase):
     
     def setUp(self):
         cfg = {
@@ -200,7 +200,7 @@ class APIBasicListTests(TestCase):
         })
         
         
-    def test_edit_single(self, ):
+    def test_put_single(self, ):
         self.db.users.insert([
             {'username': 'fflint'},    
             {'username': 'brubble'},    
@@ -221,6 +221,31 @@ class APIBasicListTests(TestCase):
         
         data = self.db.users.find_one(2)
         self.assertEqual(data, {'_id':2, 'username': 'brubble', 'active': False})        
+
+
+    def test_put_single_error(self, ):
+        self.db.users.insert([
+            {'username': 'fflint'},    
+            {'username': 'brubble'},    
+        ])
+        
+        data = {'_id':2, '_auth':{'_edit':True, '_delete':True}, 'username': None, 'active': False}
+    
+        resp = self.client.put('/api/users/2',
+                               data=json.dumps(data),
+                               content_type = 'application/json'
+                               )
+        self.assertEqual(resp.status_code, 200)
+        data = json.loads(resp.data)
+        self.assertEqual(data, {
+            '_status': 'ERR',
+            'message': 'Field errors',
+            'field_errors': ['username: value is required'],
+        })
+        
+        data = self.db.users.find_one(2)
+        self.assertEqual(data, {'_id':2, 'username': 'brubble', 'active': True})        
+
 
     def test_delete_single(self, ):
         self.db.users.insert([
