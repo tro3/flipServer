@@ -113,3 +113,6 @@ def create_endpoint(name, endpoint):
     app.api.add_url_rule('/%s' % name, '%s_api_list' % name,
                          views.api_list_view_factory(app.db, name),
                          methods=['GET', 'POST'])    
+    app.api.add_url_rule('/%s/<int:id>' % name, '%s_api_item' % name,
+                         views.api_item_view_factory(app.db, name),
+                         methods=['GET', 'PUT', 'DELETE'])

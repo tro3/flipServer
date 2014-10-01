@@ -54,7 +54,6 @@ def api_list_view_factory(db, collection_name):
     
     def view_fcn():
         endpoint = db.endpoints[collection_name]
-        schema = endpoint['schema'] #Temp
         
         if request.method == 'GET':
             if not resolve_auth('read', endpoint):
@@ -112,31 +111,34 @@ def api_list_view_factory(db, collection_name):
 
 
 
-def api_item_view_factory(app, collection_name):
+def api_item_view_factory(db, collection_name):
     
     def view_fcn(id):
-        import backend
+        endpoint = db.endpoints[collection_name]
 
-        endpoint, schema = authenticate_endpoint(app, collection_name)
-        if endpoint == 'UNAUTHORIZED':
-            return UNAUTHORIZED
-
-        if not app.mongo.db[collection_name].find({"_id": id}).count():
+        if not db[collection_name].find({"_id": id}).count():
             return NOT_FOUND
 
-        data = app.mongo.db[collection_name].find_one({"_id": id})
-        data = DBDocument(data, endpoint)
+#        data = app.mongo.db[collection_name].find_one({"_id": id})
+#        data = DBDocument(data, endpoint)
 
-        try:
-            projection = json.loads(request.args.get('fields', 'null'))
-        except:
-            return MALFORMED
 
 
         if request.method == 'GET':
-            if not data._auth_state.read:
+            
+            try:
+                fields = json.loads(request.args.get('fields', 'null'))
+            except:
+                return MALFORMED
+
+            data = db[collection_name].find_one({'_id':id}, fields)
+            
+            if not data._authstate['_read']:
                 return UNAUTHORIZED
-            return Response(dumps(data, app), content_type='application/json')
+            
+            resp = {'_status':'OK', '_item':db[collection_name].get_serial_dict(data)}
+            return Response(json.dumps(resp), content_type='application/json')
+
         
 
         elif request.method == 'PUT':
