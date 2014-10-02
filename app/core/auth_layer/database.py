@@ -127,6 +127,8 @@ class AuthCollectionWrapper(SchemaCollectionWrapper):
 
         data = self.find_one({"_id":incoming["_id"]})
         add_authstates(self.endpoint, data)
+        if not data._authstate['_edit']:
+            incoming = {'_id': incoming['_id']}
         enforce_auth(self.endpoint, data, incoming)
         merge(data, incoming)
         fill_in_prototypes(self.schema, data)
