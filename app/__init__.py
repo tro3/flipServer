@@ -15,8 +15,6 @@ class AngularFlask(Flask):
 
 app = None
 
-def get_app():
-    return app
 
 def create_app(**config):
     global app

@@ -199,3 +199,69 @@ class ScenarioTests(TestCase):
                 ],
             }
         })
+
+
+
+    def test_endpoint_callable_auth(self):
+        enable = False
+        cfg = {
+            'users': {
+                'auth': {
+                    'create': lambda: enable    
+                },
+                'schema': {
+                    'username': {"type": "string", 'required': True},
+                    'active': {"type": "boolean", 'required': True, 'default': True},
+                }
+            }
+        }
+        self.set_up(cfg)
+
+        data = {'username': 'fflint'}
+        
+        resp = self.client.post('/api/users',
+                                data=json.dumps(data),
+                                content_type = 'application/json'
+                                )
+        
+        self.assertEqual(resp.status_code, 403)        
+        self.assertEqual(self.db.users.find().count(), 0)
+
+        enable = True
+        resp = self.client.post('/api/users',
+                                data=json.dumps(data),
+                                content_type = 'application/json'
+                                )
+        
+        self.assertEqual(resp.status_code, 201)        
+        self.assertEqual(self.db.users.find().count(), 1)
+
+
+    def test_endpoint_read_auth(self):
+        cfg = {
+            'users': {
+                'auth': {
+                    'read': False    
+                },
+                'schema': {
+                    'username': {"type": "string", 'required': True},
+                    'active': {"type": "boolean", 'required': True, 'default': True},
+                }
+            }
+        }
+        self.set_up(cfg)
+
+        data = {'username': 'fflint'}
+        
+        resp = self.client.get('/api/users',
+                                data=json.dumps(data),
+                                content_type = 'application/json'
+                                )
+        
+        self.assertEqual(resp.status_code, 403)        
+        data = json.loads(resp.data)
+        self.assertEqual(data, {
+            '_status': 'ERR',
+            'message': 'Unauthorized',
+        })
+
