@@ -84,8 +84,8 @@ def enforce_auth(endpoint, doc, incoming):
                 # Check for edited or deleted items
                 ids = [x.get('_id',0) for x in incoming[key]]
                 for i,item in enumerate(doc[key]):
-                    if item._id in ids and not item._authstate['edit']:
-                        incoming[ids.index(item._id)] = {'_id':item._id}
+                    if item._id in ids and not item._authstate['_edit']:
+                        incoming[key][ids.index(item._id)] = {'_id':item._id}
                     
                     if item._id not in ids and not item._authstate['_delete']:
                         incoming[key].insert(i, {'_id':item._id})
