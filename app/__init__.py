@@ -51,14 +51,14 @@ def create_app(**config):
     @app.route('/')
     def homepage():
         return redirect('/home/')
-    app.add_url_rule('/home', 'home', lambda: app.send_static_file('home/index.html'))
+    app.add_url_rule('/home/', 'home', lambda: app.send_static_file('home/index.html'))
     
     
 
     app.api = Blueprint('api', 'api', url_prefix='/api')
 
     for name, endp in app.config.get('ENDPOINTS', {}).items():
-        app.add_url_rule('/%s' % name, name, lambda: app.send_static_file('%s/index.html' % name))
+        app.add_url_rule('/%s/' % name, name, lambda: app.send_static_file('%s/index.html' % name))
         create_endpoint(name, endp)
     
     app.register_blueprint(app.api)
