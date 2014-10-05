@@ -51,14 +51,13 @@ def create_app(**config):
     @app.route('/')
     def homepage():
         return redirect('/home/')
-    app.add_url_rule('/home/', 'home', lambda: app.send_static_file('home/index.html'))
+    app.add_url_rule('/home/', 'home_index', create_index_server('home'))
     
     
-
     app.api = Blueprint('api', 'api', url_prefix='/api')
 
     for name, endp in app.config.get('ENDPOINTS', {}).items():
-        app.add_url_rule('/%s/' % name, name, lambda: app.send_static_file('%s/index.html' % name))
+        app.add_url_rule('/%s/' % name, '%s_index' % name, create_index_server(name))
         create_endpoint(name, endp)
     
     app.register_blueprint(app.api)
@@ -76,3 +75,11 @@ def create_endpoint(name, endpoint):
     app.api.add_url_rule('/%s/<int:id>' % name, '%s_api_item' % name,
                          views.api_item_view_factory(app.db, name),
                          methods=['GET', 'PUT', 'DELETE'])
+
+
+def create_index_server(name):
+    global app
+
+    def serve():
+        return app.send_static_file('%s/index.html' % name)
+    return serve
