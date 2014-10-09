@@ -77,7 +77,7 @@ def api_list_view_factory(db, collection_name):
             except:
                 return MALFORMED
 
-            if '_id' in incoming:
+            if '_id' in incoming and incoming['_id'] is not None:
                 return EXISTING        
 
             if not resolve_auth('create', endpoint):

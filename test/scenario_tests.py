@@ -265,3 +265,28 @@ class ScenarioTests(TestCase):
             'message': 'Unauthorized',
         })
 
+
+    def test_null_id_post(self):
+        cfg = {
+            'users': {
+                'auth': {
+                    'read': False    
+                },
+                'schema': {
+                    'username': {"type": "string", 'required': True},
+                    'active': {"type": "boolean", 'required': True, 'default': True},
+                }
+            }
+        }
+        self.set_up(cfg)
+
+        data = {'_id': None, 'username': 'fflint'}
+        
+        resp = self.client.post('/api/users',
+                                data=json.dumps(data),
+                                content_type = 'application/json'
+                                )
+        
+        self.assertEqual(resp.status_code, 201)        
+        data = json.loads(resp.data)
+        self.assertEqual(self.db.users.find().count(), 1)
