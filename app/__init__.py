@@ -3,7 +3,8 @@ import json
 from PIL import Image
 from StringIO import StringIO
 from flask import Flask, render_template, request, abort, Response, Blueprint, redirect
-from core import auth_layer, views
+import api
+
 
 class AngularFlask(Flask):
     jinja_options = Flask.jinja_options.copy()
@@ -25,9 +26,14 @@ def create_app(**config):
     except:
         pass
     app.config.update(config)
-    app.db = auth_layer.init(config.get('CLIENT', None))
     
+    
+    app.db = api.auth_layer.init(config.get('CLIENT', None))
 
+    bp = api.create_api(app)
+    app.register_blueprint(bp)
+
+    
     @app.before_request
     def add_user():
         if not app.config.get('REQUIRE_USER', False):
@@ -49,37 +55,10 @@ def create_app(**config):
 
     
     @app.route('/')
-    def homepage():
+    def index():
         return redirect('/home/')
-    app.add_url_rule('/home/', 'home_index', create_index_server('home'))
+    app.add_url_rule('/home/', 'home_index', api.create_index_server(app, 'home'))
     
-    
-    app.api = Blueprint('api', 'api', url_prefix='/api')
-
-    for name, endp in app.config.get('ENDPOINTS', {}).items():
-        app.add_url_rule('/%s/' % name, '%s_index' % name, create_index_server(name))
-        create_endpoint(name, endp)
-    
-    app.register_blueprint(app.api)
     
     return app
 
-
-def create_endpoint(name, endpoint):
-    global app
-
-    app.db.register_endpoint(name, endpoint)     
-    app.api.add_url_rule('/%s' % name, '%s_api_list' % name,
-                         views.api_list_view_factory(app.db, name),
-                         methods=['GET', 'POST'])    
-    app.api.add_url_rule('/%s/<int:id>' % name, '%s_api_item' % name,
-                         views.api_item_view_factory(app.db, name),
-                         methods=['GET', 'PUT', 'DELETE'])
-
-
-def create_index_server(name):
-    global app
-
-    def serve():
-        return app.send_static_file('%s/index.html' % name)
-    return serve

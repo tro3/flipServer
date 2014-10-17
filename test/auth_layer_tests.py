@@ -3,7 +3,7 @@ from unittest import TestCase
 import datetime
 
 import mongomock
-from app.core import auth_layer
+from app.api import auth_layer
 from schemongo.db_layer.db_doc import DBDoc
 
 import json
