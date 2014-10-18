@@ -29,9 +29,7 @@ def create_app(**config):
     
     
     app.db = api.auth_layer.init(config.get('CLIENT', None))
-
-    bp = api.create_api(app)
-    app.register_blueprint(bp)
+    app.register_blueprint(api.create_api(app), url_prefix='/api')
 
     
     @app.before_request

@@ -3,7 +3,7 @@ import views
 
 
 def create_api(app):
-    api = Blueprint('api', 'api', url_prefix='/api')
+    api = Blueprint('api', 'api')
     setup_endpoints(app, api)
     return api
 
