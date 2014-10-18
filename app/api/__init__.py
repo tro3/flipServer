@@ -1,5 +1,6 @@
 from flask import Blueprint
 import views
+import auth_layer
 
 
 def create_api(app):

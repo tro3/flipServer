@@ -1,0 +1,7 @@
+
+ENDPOINTS = {
+    'example': {
+        'auth': {},
+        'schema': {}
+    }
+}

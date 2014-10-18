@@ -27,7 +27,6 @@ def create_app(**config):
         pass
     app.config.update(config)
     
-    
     app.db = api.auth_layer.init(config.get('CLIENT', None))
     app.register_blueprint(api.create_api(app), url_prefix='/api')
 
@@ -54,8 +53,7 @@ def create_app(**config):
     
     @app.route('/')
     def index():
-        return redirect('/home/')
-    app.add_url_rule('/home/', 'home_index', api.create_index_server(app, 'home'))
+        return app.send_static_file('index.html')
     
     
     return app
