@@ -515,3 +515,109 @@ class AuthLayerTests(TestCase):
                 }
             ]
         })
+        
+        
+        
+    def test_reference_expansion(self):
+        self.db.register_endpoint('test', {
+            'schema': {
+                "name": {"type": "string"},
+                "contact": {
+                    'type': 'reference',
+                    'collection': 'users'
+                },
+                "contacts": {"type": "list", "schema": {
+                    'type': 'reference',
+                    'collection': 'users'
+                }},
+            }
+        })
+
+        data = {'_id':2, 'username': 'fred'}
+        ids, errs = self.db.users.insert(data, self.user, direct=True)
+        self.assertIsNone(errs)
+
+
+
+        data = {
+            "name": "Bob",
+            "contact": 2,
+            "contacts": [1,2]
+        }
+        ids, errs = self.db.test.insert(data, self.user, direct=True)
+        self.assertIsNone(errs)
+
+        data = json.loads(self.db.test.find_and_serialize())
+        self.assertEqual(data, [
+        {
+            "_id": 1,
+            "_auth": {
+                "_edit": True,
+                "_delete": True,
+            },
+            "name": "Bob",
+            "contact": {
+                "_auth": {
+                    "_edit": True,
+                    "_delete": True,
+                },
+                "_id":2,
+                "username": "fred",
+            },
+            "contacts": [
+                {
+                    "_auth": {
+                        "_edit": True,
+                        "_delete": True,
+                    },
+                    "_id":1,
+                    "username": "bob",
+                },
+                {
+                    "_auth": {
+                        "_edit": True,
+                        "_delete": True,
+                    },
+                    "_id":2,
+                    "username": "fred",
+                }
+            ]
+        }])
+        
+
+        data = json.loads(self.db.test.find_one_and_serialize(1))
+        self.assertEqual(data, 
+        {
+            "_id": 1,
+            "_auth": {
+                "_edit": True,
+                "_delete": True,
+            },
+            "name": "Bob",
+            "contact": {
+                "_auth": {
+                    "_edit": True,
+                    "_delete": True,
+                },
+                "_id":2,
+                "username": "fred",
+            },
+            "contacts": [
+                {
+                    "_auth": {
+                        "_edit": True,
+                        "_delete": True,
+                    },
+                    "_id":1,
+                    "username": "bob",
+                },
+                {
+                    "_auth": {
+                        "_edit": True,
+                        "_delete": True,
+                    },
+                    "_id":2,
+                    "username": "fred",
+                }
+            ]
+        })

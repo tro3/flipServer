@@ -94,7 +94,7 @@ class AuthCollectionWrapper(SchemaCollectionWrapper):
         return AuthSchemaCursorWrapper(self.coll.find(spec, fields, skip, limit, sort), self.db, self.endpoint, user=None)
 
     def find_one(self, spec_or_id, fields=None, skip=0, sort=None, user=None):
-        tmp = self.coll.find_one(spec_or_id, fields, skip, sort)
+        tmp = SchemaCollectionWrapper.find_one(self, spec_or_id, fields, skip, sort)
         if not tmp:
             return tmp
         add_authstates(self.endpoint, tmp, user)
