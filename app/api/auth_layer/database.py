@@ -95,6 +95,8 @@ class AuthCollectionWrapper(SchemaCollectionWrapper):
 
     def find_one(self, spec_or_id, fields=None, skip=0, sort=None, user=None):
         tmp = self.coll.find_one(spec_or_id, fields, skip, sort)
+        if not tmp:
+            return tmp
         add_authstates(self.endpoint, tmp, user)
         enforce_auth_read(self.endpoint, tmp)
         return tmp

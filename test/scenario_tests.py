@@ -290,3 +290,61 @@ class ScenarioTests(TestCase):
         self.assertEqual(resp.status_code, 201)        
         data = json.loads(resp.data)
         self.assertEqual(self.db.users.find().count(), 1)
+
+
+    def test_nonreference(self):
+        cfg = {
+            'users': {
+                'schema': {
+                    'username': {"type": "string", 'required': True},
+                    'active': {"type": "boolean", 'required': True, 'default': True},
+                }
+            },
+            'contacts': {
+                'schema': {
+                    'contact_name': {"type": "string", 'required': True},
+                    'users': {"type": "list", 'schema': {
+                        'type': 'reference',
+                        'collection': 'users'
+                    }},
+                }
+            }
+        }
+        self.set_up(cfg)
+
+        data = {'username': 'fflint'}
+        
+        resp = self.client.post('/api/users',
+                                data=json.dumps(data),
+                                content_type = 'application/json'
+                                )
+        
+        self.assertEqual(resp.status_code, 201)        
+
+
+        data = {'contact_name': 'Barney', 'users': [{'_id':2}]}
+        
+        resp = self.client.post('/api/contacts',
+                                data=json.dumps(data),
+                                content_type = 'application/json'
+                                )
+        
+        self.assertEqual(resp.status_code, 201)        
+
+        resp = self.client.get('/api/contacts',
+                                data=json.dumps(data),
+                                content_type = 'application/json'
+                                )
+        data = json.loads(resp.data)
+        self.assertEqual(data, {
+            '_status': 'OK',
+            '_auth': True,
+            '_items': [
+                {
+                    '_id': 1,
+                    '_auth': {'_edit':True, '_delete':True},
+                    'contact_name': 'Barney',
+                    'users': [{'_err': 'reference not found'}]
+                }
+            ]
+        })
