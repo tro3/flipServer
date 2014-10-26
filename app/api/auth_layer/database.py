@@ -98,11 +98,11 @@ class AuthCollectionWrapper(SchemaCollectionWrapper):
         spec = spec or {}
         if '_active' not in spec:
             spec['_active'] = True
-        fields = fields or {'_active': -1}
+        fields = fields or {'_active': 0}
         return AuthSchemaCursorWrapper(self.coll.find(spec, fields, skip, limit, sort), self.db, self.endpoint, user=None)
 
     def find_one(self, spec_or_id, fields=None, skip=0, sort=None, user=None):
-        fields = fields or {'_active': -1}
+        fields = fields or {'_active': 0}
         tmp = SchemaCollectionWrapper.find_one(self, spec_or_id, fields, skip, sort)
         if not tmp:
             return tmp
