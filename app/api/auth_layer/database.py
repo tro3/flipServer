@@ -64,7 +64,11 @@ class AuthDatabaseWrapper(SchemaDatabaseWrapper):
         schema['_auth'] = {
             'type': 'dict',
             'serialize': lambda e: gen_auth(e._authstate)
-        }                
+        }
+        schema['_active'] = {
+            'type': 'boolean',
+            'default': True
+        }
         self._add_auth_schemas(schema)
         self.register_schema(key, schema)
                                 
@@ -88,12 +92,17 @@ class AuthDatabaseWrapper(SchemaDatabaseWrapper):
 class AuthCollectionWrapper(SchemaCollectionWrapper):
     def __init__(self, endpoint, collection, db):
         super(AuthCollectionWrapper, self).__init__(endpoint['schema'], collection, db)
-        self.endpoint = endpoint
+        self.endpoint = endpoint    
 
     def find(self, spec=None, fields=None, skip=0, limit=0, sort=None, user=None):
+        spec = spec or {}
+        if '_active' not in spec:
+            spec['_active'] = True
+        fields = fields or {'_active': -1}
         return AuthSchemaCursorWrapper(self.coll.find(spec, fields, skip, limit, sort), self.db, self.endpoint, user=None)
 
     def find_one(self, spec_or_id, fields=None, skip=0, sort=None, user=None):
+        fields = fields or {'_active': -1}
         tmp = SchemaCollectionWrapper.find_one(self, spec_or_id, fields, skip, sort)
         if not tmp:
             return tmp
