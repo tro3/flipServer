@@ -46,20 +46,28 @@ def add_authstates(endpoint, doc, auth_state=None, subdoc=False):
     doc._authstate = auth_state
     
 
-def enforce_auth_read(endpoint, doc):
+
+def get_by_id(list, id):
+    for item in list:
+        if item['_id'] == id:
+            return item
+    
+
+def enforce_auth_read(endpoint, doc, data=None):
     schema = endpoint['schema']
-    for key, val in doc.items():
+    data = data or doc._projection
+    for key, val in data.items():
         if key in schema and is_object(schema[key]):
-            if not val._authstate['_read']:
-                doc.pop(key)
+            if not doc[key]._authstate['_read']:
+                data.pop(key)
             else:
-                enforce_auth_read(schema[key], val)
+                enforce_auth_read(schema[key], doc[key], val)
         if key in schema and is_list_of_objects(schema[key]):
             for item in val[:]:
-                if not item._authstate['_read']:
+                if not get_by_id(doc[key], item['_id'])._authstate['_read']:
                     val.remove(item)
                 else:
-                    enforce_auth_read(schema[key]['schema'], item)
+                    enforce_auth_read(schema[key]['schema'], get_by_id(doc[key], item['_id']), item)
 
 
 
