@@ -59,6 +59,7 @@ class AuthLayerTests(TestCase):
         self.assertEqual(type(data), DBDoc)
         self.assertEqual(data, {
             "_id": 1,
+            "_active": True,
             "name": "Bob",
             "subdoc": {
                 "_id": 1,
@@ -621,3 +622,39 @@ class AuthLayerTests(TestCase):
                 }
             ]
         })
+
+
+    def test_deletion(self):
+        self.db.register_endpoint('test', {
+            'schema': {
+                "name": {"type": "string"},
+            }
+        })
+
+
+        data = [
+            {"name": "Bob"},
+            {"name": "Fred"},
+            {"name": "George"},
+        ]
+        ids, errs = self.db.test.insert(data, self.user)
+        self.assertIsNone(errs)
+        
+        self.db.test.remove({"name":"Fred"})
+        data = self.db.test.find().all()
+        self.assertEqual(data, [{
+            "_id": 1,
+            "_active": True,
+            "name": "Bob",
+        },{
+            "_id": 3,
+            "_active": True,
+            "name": "George",            
+        }])
+
+        data = self.db.test.find({'_active': False}).all()
+        self.assertEqual(data, [{
+            "_id": 2,
+            "_active": False,
+            "name": "Fred",
+        }])

@@ -114,7 +114,7 @@ class BasicAPITests(TestCase):
         })
         
         data = self.db.users.find_one(1)
-        self.assertEqual(data, {'_id':1, 'username': 'fflint', 'active': True})        
+        self.assertEqual(data, {'_id':1, '_active': True, 'username': 'fflint', 'active': True})        
 
 
     def test_post_multi_list(self, ):
@@ -140,7 +140,7 @@ class BasicAPITests(TestCase):
         })
         
         data = self.db.users.find_one(2)
-        self.assertEqual(data, {'_id':2, 'username': 'brubble', 'active': True})        
+        self.assertEqual(data, {'_id':2, '_active': True, 'username': 'brubble', 'active': True})        
         
 
     def test_post_error(self, ):
@@ -220,7 +220,7 @@ class BasicAPITests(TestCase):
         })
         
         data = self.db.users.find_one(2)
-        self.assertEqual(data, {'_id':2, 'username': 'brubble', 'active': False})        
+        self.assertEqual(data, {'_id':2, '_active': True, 'username': 'brubble', 'active': False})        
 
 
     def test_put_single_error(self, ):
@@ -244,7 +244,7 @@ class BasicAPITests(TestCase):
         })
         
         data = self.db.users.find_one(2)
-        self.assertEqual(data, {'_id':2, 'username': 'brubble', 'active': True})        
+        self.assertEqual(data, {'_id':2, '_active': True, 'username': 'brubble', 'active': True})        
 
 
     def test_delete_single(self, ):

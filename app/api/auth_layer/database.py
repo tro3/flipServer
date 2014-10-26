@@ -110,6 +110,18 @@ class AuthCollectionWrapper(SchemaCollectionWrapper):
         enforce_auth_read(self.endpoint, tmp)
         return tmp
     
+    def remove(self, spec_or_id, username=None):
+        if isinstance(spec_or_id, dict):
+            data = self.coll.find(spec_or_id)
+        else:
+            data = self.coll.find({'_id': spec_or_id})
+        data = [x for x in data]
+        
+        for item in data:
+            item['_active'] = False
+            self.coll.update(item)
+
+    
     def process_insert(self, incoming):
         errs = enforce_datatypes(self.schema, incoming)
         if errs:
