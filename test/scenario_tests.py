@@ -348,3 +348,58 @@ class ScenarioTests(TestCase):
                 }
             ]
         })
+
+
+    def test_auth_wprojections(self):
+        cfg = {
+            'users': {
+                'schema': {
+                    'username': {"type": "string", 'required': True},
+                    'active': {"type": "boolean", 'required': True, 'default': True},
+                }
+            }
+        }
+        self.set_up(cfg)
+
+        data = {'username': 'fflint'}
+        
+        resp = self.client.post('/api/users',
+                                data=json.dumps(data),
+                                content_type = 'application/json'
+                                )        
+        self.assertEqual(resp.status_code, 201)        
+
+        resp = self.client.get('/api/users/1',
+                                data=json.dumps(data),
+                                content_type = 'application/json'
+                                )
+        
+        self.assertEqual(resp.status_code, 200)        
+        data = json.loads(resp.data)
+        self.assertEqual(data, {
+            '_status': 'OK',
+            '_item':
+                {
+                    '_id': 1,
+                    '_auth': {'_edit':True, '_delete':True},
+                    'username': 'fflint',
+                    'active': True
+                }
+        })
+
+        resp = self.client.get('/api/users/1?fields={"username":1}',
+                                data=json.dumps(data),
+                                content_type = 'application/json'
+                                )
+        
+        self.assertEqual(resp.status_code, 200)        
+        data = json.loads(resp.data)
+        self.assertEqual(data, {
+            '_status': 'OK',
+            '_item':
+                {
+                    '_id': 1,
+                    '_auth': {'_edit':True, '_delete':True},
+                    'username': 'fflint',
+                }
+        })
