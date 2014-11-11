@@ -148,7 +148,7 @@ class AuthCollectionWrapper(SchemaCollectionWrapper):
         if errs:
             return (None, errs)
 
-        data = self.find_one({"_id":incoming["_id"]})
+        data = self.coll.find_one({"_id":incoming["_id"]})
         add_authstates(self.endpoint, data)
         if not data._authstate['_edit']:
             incoming = {'_id': incoming['_id']}
