@@ -11,7 +11,7 @@ def create_api(app):
 
 def setup_endpoints(app, api):
     for name, endp in app.config.get('ENDPOINTS', {}).items():
-        app.add_url_rule('/%s/' % name, '%s_index' % name, create_index_server(app, name))
+        create_index_server(app, name)
         create_endpoint(app, api, name, endp)
 
 
@@ -28,4 +28,4 @@ def create_endpoint(app, api, name, endpoint):
 def create_index_server(app, name):
     def serve():
         return app.send_static_file('%s/index.html' % name)
-    return serve
+    app.add_url_rule('/%s/' % name, '%s_index' % name, serve)
