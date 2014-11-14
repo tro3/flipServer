@@ -83,7 +83,11 @@ def api_list_view_factory(db, collection_name):
             if not resolve_auth('create', endpoint):
                 return UNAUTHORIZED
 
-            ids, errs = db[collection_name].insert(incoming)
+            try:
+                name = username=request.user.username
+            except AttributeError:
+                name = None
+            ids, errs = db[collection_name].insert(incoming, username=name)
             
             if errs:
                 resp = {'_status':'ERR', 'message': 'Field errors'}
@@ -141,7 +145,11 @@ def api_item_view_factory(db, collection_name):
                 return WRONG_ID
             incoming.update({'_id':id})
             
-            errs = db[collection_name].update(incoming)
+            try:
+                name = username=request.user.username
+            except AttributeError:
+                name = None
+            errs = db[collection_name].update(incoming, username=name)
 
             if errs:
                 resp = {'_status':'ERR', 'message': 'Field errors'}
