@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from schemongo.schema_layer.schema_doc import is_object, is_list_of_objects, DBDoc
+from schemongo.schema_layer.schema_doc import is_object, is_list_of_objects, DBDoc, generate_prototype
 
 
 def AuthState():
@@ -30,7 +30,7 @@ def add_authstates(endpoint, doc, auth_state=None, subdoc=False):
     lists = {}
 
     for key, val in schema.items():
-        if is_object(val):
+        if is_object(val) and key in doc:
             add_authstates(val, doc[key], auth_state, subdoc=True)
             
         if is_list_of_objects(val):
@@ -39,8 +39,9 @@ def add_authstates(endpoint, doc, auth_state=None, subdoc=False):
             new_auth_state = dict(auth_state)
             new_auth_state['_create'] = lists[key]
             
-            for item in doc[key]:
-                add_authstates(val['schema'], item, new_auth_state)
+            if key in doc:
+                for item in doc[key]:
+                    add_authstates(val['schema'], item, new_auth_state)
                 
     auth_state.update(lists)
     doc._authstate = auth_state
@@ -74,10 +75,11 @@ def enforce_auth_read(endpoint, doc, data=None):
 def enforce_auth(endpoint, doc, incoming):
     schema = endpoint['schema']
 
-    for key, val in schema.items():
+    for key, val in schema.items():        
         if key in incoming:
             
             if is_object(val):
+
                 if not doc[key]._authstate['_edit']:
                     incoming.pop(key)
                 else:
@@ -102,7 +104,10 @@ def enforce_auth(endpoint, doc, incoming):
                 ids = [x._id for x in doc[key]]
                 for item in incoming[key]:
                     if not item.get('_id',0):
-                        sdoc = DBDoc({})
+                        sdoc = generate_prototype(val['schema']['schema'])
+                        new_state = dict(doc._authstate)
+                        new_state['_create'] = True
+                        add_authstates(val['schema'], sdoc, new_state)
                     else:
                         sdoc = doc[key][ids.index(item['_id'])]
                     enforce_auth(val['schema'], sdoc, item)
