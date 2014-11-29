@@ -403,3 +403,165 @@ class ScenarioTests(TestCase):
                     'username': 'fflint',
                 }
         })
+
+
+    def test_endpoint_read_auth_no_parameter(self):
+        read = {}
+        read['read'] = False
+        cfg = {
+            'users': {
+                'auth': {
+                    'read': lambda: read['read']
+                },
+                'schema': {
+                    'username': {"type": "string", 'required': True},
+                    'active': {"type": "boolean", 'required': True, 'default': True},
+                }
+            }
+        }
+        self.set_up(cfg)
+
+        data = {'username': 'fflint'}
+        
+        resp = self.client.post('/api/users',
+                                data=json.dumps(data),
+                                content_type = 'application/json'
+                                )        
+        self.assertEqual(resp.status_code, 201)        
+
+        resp = self.client.get('/api/users',
+                                data=json.dumps(data),
+                                content_type = 'application/json'
+                                )
+        self.assertEqual(resp.status_code, 403)        
+
+        resp = self.client.get('/api/users/1',
+                                data=json.dumps(data),
+                                content_type = 'application/json'
+                                )
+        self.assertEqual(resp.status_code, 403)        
+
+
+        read['read'] = True
+
+        resp = self.client.get('/api/users',
+                                data=json.dumps(data),
+                                content_type = 'application/json'
+                                )
+        
+        self.assertEqual(resp.status_code, 200)        
+        data = json.loads(resp.data)
+        self.assertEqual(data, {
+            '_auth': True,
+            '_status': 'OK',
+            '_items': [
+                {
+                    '_id': 1,
+                    '_auth': {'_edit':True, '_delete':True},
+                    'username': 'fflint',
+                    'active': True
+                }
+            ]
+        })
+
+        resp = self.client.get('/api/users/1',
+                                data=json.dumps(data),
+                                content_type = 'application/json'
+                                )
+        
+        self.assertEqual(resp.status_code, 200)        
+        data = json.loads(resp.data)
+        self.assertEqual(data, {
+            '_status': 'OK',
+            '_item':
+                {
+                    '_id': 1,
+                    '_auth': {'_edit':True, '_delete':True},
+                    'username': 'fflint',
+                    'active': True
+                }
+        })
+        
+
+    def test_endpoint_read_auth_one_parameter(self):
+        read = {}
+        read['read'] = False
+        cfg = {
+            'users': {
+                'auth': {
+                    'read': lambda x: read['read']
+                },
+                'schema': {
+                    'username': {"type": "string", 'required': True},
+                    'active': {"type": "boolean", 'required': True, 'default': True},
+                }
+            }
+        }
+        self.set_up(cfg)
+
+        data = {'username': 'fflint'}
+        
+        resp = self.client.post('/api/users',
+                                data=json.dumps(data),
+                                content_type = 'application/json'
+                                )        
+        self.assertEqual(resp.status_code, 201)        
+
+        resp = self.client.get('/api/users',
+                                data=json.dumps(data),
+                                content_type = 'application/json'
+                                )        
+        self.assertEqual(resp.status_code, 200)        
+        data = json.loads(resp.data)
+        p(data)
+        self.assertEqual(data, {
+            '_auth': True,
+            '_status': 'OK',
+            '_items': []
+        })
+
+        resp = self.client.get('/api/users/1',
+                                data=json.dumps(data),
+                                content_type = 'application/json'
+                                )
+        self.assertEqual(resp.status_code, 403)        
+
+
+        read['read'] = True
+
+        resp = self.client.get('/api/users',
+                                data=json.dumps(data),
+                                content_type = 'application/json'
+                                )        
+        self.assertEqual(resp.status_code, 200)        
+        data = json.loads(resp.data)
+        self.assertEqual(data, {
+            '_auth': True,
+            '_status': 'OK',
+            '_items': [
+                {
+                    '_id': 1,
+                    '_auth': {'_edit':True, '_delete':True},
+                    'username': 'fflint',
+                    'active': True
+                }
+            ]
+        })
+
+        resp = self.client.get('/api/users/1',
+                                data=json.dumps(data),
+                                content_type = 'application/json'
+                                )
+        self.assertEqual(resp.status_code, 200)        
+        data = json.loads(resp.data)
+        self.assertEqual(data, {
+            '_status': 'OK',
+            '_item':
+                {
+                    '_id': 1,
+                    '_auth': {'_edit':True, '_delete':True},
+                    'username': 'fflint',
+                    'active': True
+                }
+        })
+        

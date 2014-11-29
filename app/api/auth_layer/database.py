@@ -174,5 +174,9 @@ class AuthSchemaCursorWrapper(SchemaCursorWrapper):
     def __getitem__(self, index):
         tmp = SchemaCursorWrapper.__getitem__(self, index)
         add_authstates(self.endpoint, tmp, self.user)
+        while not tmp._authstate['_read']:
+            index += 1
+            tmp = SchemaCursorWrapper.__getitem__(self, index)            
+            add_authstates(self.endpoint, tmp, self.user)
         enforce_auth_read(self.endpoint, tmp)
         return tmp

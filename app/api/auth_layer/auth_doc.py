@@ -15,7 +15,10 @@ def AuthState():
 def resolve_state(key, auth_cfg, auth_state, doc):
     result = auth_cfg.get(key[1:], auth_state[key])
     if callable(result):
-        result = result(doc)
+        try:
+            result = result(doc)
+        except TypeError:             # auth.read() can have zero or one args - either
+            result = result()         # case applies here
     return result
 
 

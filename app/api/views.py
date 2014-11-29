@@ -45,7 +45,12 @@ def resolve_auth(key, endpoint):
     auth = endpoint.get('auth', {})
     auth = auth.get(key, True)
     if callable(auth):
-        auth = auth()
+        try:
+            auth = auth()
+        except TypeError:             # auth.read() can have zero or one args - the zero-arg
+            if key != 'read':         # case applies here
+                raise
+            auth = True
     return auth
 
 
