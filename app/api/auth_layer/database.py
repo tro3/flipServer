@@ -167,16 +167,46 @@ class AuthCollectionWrapper(SchemaCollectionWrapper):
     
 class AuthSchemaCursorWrapper(SchemaCursorWrapper):
     def __init__(self, cursor, db, endpoint, user=None):
+        self._cache = None
         SchemaCursorWrapper.__init__(self, cursor, db, endpoint['schema'])
         self.endpoint = endpoint
         self.user = user
+        self._cache = self.all()
+        for item in self._cache:
+            add_authstates(self.endpoint, item, self.user)
+        self._cache = filter(lambda doc: doc._authstate['_read'], self._cache)
+        
+    def count(self):
+        if not self._cache:
+            return SchemaCursorWrapper.count(self)
+        return len(self._cache)
 
     def __getitem__(self, index):
-        tmp = SchemaCursorWrapper.__getitem__(self, index)
-        add_authstates(self.endpoint, tmp, self.user)
-        while not tmp._authstate['_read']:
-            index += 1
-            tmp = SchemaCursorWrapper.__getitem__(self, index)            
-            add_authstates(self.endpoint, tmp, self.user)
+        if not self._cache:
+            return SchemaCursorWrapper.__getitem__(self, index)
+        tmp = self._cache[index]
         enforce_auth_read(self.endpoint, tmp)
         return tmp
+    
+    def __iter__(self):
+        return AuthSchemaCursorWrapperIter(self)
+    
+
+class AuthSchemaCursorWrapperIter():
+    def __init__(self, wrapper):
+        self.wrapper = wrapper
+        self.i = -1
+        
+    def __iter__(self):
+        return self
+    
+    def next(self):
+        if self.i < len(self.wrapper._cache)-1:
+            self.i += 1         
+            tmp = self.wrapper._cache[self.i]
+            enforce_auth_read(self.wrapper.endpoint, tmp)
+            return tmp
+        else:
+            raise StopIteration
+
+
