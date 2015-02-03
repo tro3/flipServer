@@ -3,7 +3,7 @@
 from schemongo.schema_layer.database import SchemaDatabaseWrapper, SchemaCollectionWrapper, SchemaCursorWrapper
 from schemongo.schema_layer.schema_doc import is_object, is_list_of_objects, generate_prototype, enforce_schema_behaviors, \
                                               enforce_datatypes, fill_in_prototypes, merge, run_auto_funcs
-from auth_doc import add_authstates, enforce_auth, enforce_auth_read
+from auth_doc import add_authstates, enforce_auth, enforce_auth_read, remove_data
 
 """
 Config:
@@ -98,11 +98,11 @@ class AuthCollectionWrapper(SchemaCollectionWrapper):
         spec = spec or {}
         if '_active' not in spec:
             spec['_active'] = True
-        fields = fields or {'_active': 0}
+        fields = fields or {'_active': 0, '_index': 0}
         return AuthSchemaCursorWrapper(self.coll.find(spec, fields, skip, limit, sort), self.db, self.endpoint, user=None)
 
     def find_one(self, spec_or_id, fields=None, skip=0, sort=None, user=None):
-        fields = fields or {'_active': 0}
+        fields = fields or {'_active': 0, '_index': 0}
         tmp = SchemaCollectionWrapper.find_one(self, spec_or_id, fields, skip, sort)
         if not tmp:
             return tmp
@@ -151,7 +151,7 @@ class AuthCollectionWrapper(SchemaCollectionWrapper):
         data = self.coll.find_one({"_id":incoming["_id"]})
         add_authstates(self.endpoint, data)
         if not data._authstate['_edit']:
-            incoming = {'_id': incoming['_id']}
+            remove_data(self.endpoint['schema'], incoming)
         enforce_auth(self.endpoint, data, incoming)
         merge(data, incoming)
         fill_in_prototypes(self.schema, data)
@@ -208,5 +208,4 @@ class AuthSchemaCursorWrapperIter():
             return tmp
         else:
             raise StopIteration
-
 

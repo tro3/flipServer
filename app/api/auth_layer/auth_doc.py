@@ -83,10 +83,9 @@ def enforce_auth(endpoint, doc, incoming):
             
             if is_object(val):
 
-                if not doc[key]._authstate['_edit']:
-                    incoming.pop(key)
-                else:
-                    enforce_auth(val, doc[key], incoming[key])
+                if not doc[key]._authstate['_edit'] and key in incoming:
+                    remove_data(val['schema'], incoming[key])
+                enforce_auth(val, doc[key], incoming[key])
             
             elif is_list_of_objects(val):
 
@@ -98,7 +97,7 @@ def enforce_auth(endpoint, doc, incoming):
                 ids = [x.get('_id',0) for x in incoming[key]]
                 for i,item in enumerate(doc[key]):
                     if item._id in ids and not item._authstate['_edit']:
-                        incoming[key][ids.index(item._id)] = {'_id':item._id}
+                        remove_data(val['schema']['schema'], incoming[key][ids.index(item._id)])
                     
                     if item._id not in ids and not item._authstate['_delete']:
                         incoming[key].insert(i, {'_id':item._id})
@@ -115,5 +114,13 @@ def enforce_auth(endpoint, doc, incoming):
                         sdoc = doc[key][ids.index(item['_id'])]
                     enforce_auth(val['schema'], sdoc, item)
                 
+                
+def remove_data(schema, incoming):
+    for key in incoming.keys():
+        if key != '_id':
+            if key in schema and is_object(schema[key]) or is_list_of_objects(schema[key]):
+                pass
+            else:
+                incoming.pop(key)
         
-    
+
